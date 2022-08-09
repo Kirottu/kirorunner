@@ -78,6 +78,7 @@ fn activate(app: &gtk::Application) {
     let scroll_window = gtk::ScrolledWindow::builder()
         .vexpand(true)
         .vscrollbar_policy(gtk::PolicyType::External)
+        .hscrollbar_policy(gtk::PolicyType::Never)
         .name(SCROLL_WINDOW_NAME)
         .build();
     let list_box = Rc::new(
@@ -97,6 +98,8 @@ fn activate(app: &gtk::Application) {
                     .label(line.as_ref().unwrap())
                     .height_request(30)
                     .hexpand(true)
+                    .wrap(true)
+                    .wrap_mode(gdk::pango::WrapMode::Word)
                     .halign(gtk::Align::Start)
                     .name(ENTRY_LABEL_NAME)
                     .build();
@@ -133,7 +136,7 @@ fn activate(app: &gtk::Application) {
                     }
                 }
             }
-            constants::Down => {
+            constants::Down | constants::Tab => {
                 if list_box.row_at_index(0) == list_box.selected_row() {
                     match list_box.row_at_index(1) {
                         Some(row) => list_box.select_row(Some(&row)),
