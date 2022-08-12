@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 closure = "0.3.0"
+fuzzy-matcher = "0.3.7"
 gdk = "0.15.4"
 gio = "0.15.12"
 gtk = "0.15.5"
 gtk-layer-shell = { version = "0.4.1", features = ["v0_6"] }
-strsim = "0.10.0"

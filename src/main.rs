@@ -5,7 +5,7 @@ use gio::prelude::*;
 use gtk::prelude::*;
 
 struct Entry {
-    pub rating: f64,
+    pub rating: i64,
     pub hidden: bool,
     pub name: String,
 }
@@ -108,7 +108,7 @@ fn activate(app: &gtk::Application) {
                 (
                     row,
                     Entry {
-                        rating: 1.0,
+                        rating: 0,
                         hidden: false,
                         name: line.unwrap(),
                     },
@@ -149,21 +149,20 @@ fn activate(app: &gtk::Application) {
         }),
     );
 
-
     entry_box.connect_changed(closure::closure!(clone entries, clone list_box, |entry_box| {
         {
             // Get a mutable reference to the entries
             let mut entries = entries.borrow_mut();
             // Store the highest rated entry for highlighting later
-            let mut highest_rating: Option<(&gtk::ListBoxRow, f64)> = None;
+            let mut highest_rating: Option<(&gtk::ListBoxRow, i64)> = None;
             for (row, entry) in entries.iter_mut() {
                 if entry_box.text().len() == 0 {
-                    entry.rating = 1.0;
+                    entry.rating = 0;
                     entry.hidden = false;
                     continue;
                 }
                 // String similarity magic
-                entry.rating = strsim::jaro_winkler(&entry_box.text().to_lowercase(), &entry.name.to_lowercase());
+                entry.rating = fuzzy_matcher::clangd::fuzzy_match(&entry.name, &entry_box.text()).unwrap_or(0);
                 // Update the highest rated item
                 match highest_rating {
                     Some(_highest_rating) => {
@@ -176,7 +175,7 @@ fn activate(app: &gtk::Application) {
                     }
                 }
                 // Arbitrary low-bar for results
-                if entry.rating < 0.1 {
+                if entry.rating < 1 {
                     entry.hidden = true;
                 } else {
                     entry.hidden = false;
@@ -199,10 +198,7 @@ fn activate(app: &gtk::Application) {
     // Sort them according to the rating
     list_box.set_sort_func(Some(Box::new(closure::closure!(clone entries, |a, b| {
         let entries = entries.borrow();
-        match entries[b].rating.partial_cmp(&entries[a].rating) {
-            Some(ordering) => ordering as i32,
-            None => 0,
-        }
+        entries[b].rating.cmp(&entries[a].rating) as i32
     }))));
     // Filter them according to them being hidden or not
     list_box.set_filter_func(Some(Box::new(closure::closure!(clone entries, |a| {
