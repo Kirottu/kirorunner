@@ -59,7 +59,7 @@ fn activate(app: &gtk::Application) {
     // Layer shell stuff
     gtk_layer_shell::init_for_window(&window);
     gtk_layer_shell::set_keyboard_mode(&window, gtk_layer_shell::KeyboardMode::Exclusive);
-    gtk_layer_shell::set_layer(&window, gtk_layer_shell::Layer::Overlay);
+    gtk_layer_shell::set_layer(&window, gtk_layer_shell::Layer::Top);
     gtk_layer_shell::set_anchor(&window, gtk_layer_shell::Edge::Top, true);
 
     // The main VBox of the program
@@ -75,12 +75,14 @@ fn activate(app: &gtk::Application) {
         .margin_start(5)
         .name(INPUT_BOX_NAME)
         .build();
+
     let scroll_window = gtk::ScrolledWindow::builder()
         .vexpand(true)
         .vscrollbar_policy(gtk::PolicyType::External)
         .hscrollbar_policy(gtk::PolicyType::Never)
         .name(SCROLL_WINDOW_NAME)
         .build();
+
     let list_box = Rc::new(
         gtk::ListBox::builder()
             .hexpand(true)
@@ -137,13 +139,37 @@ fn activate(app: &gtk::Application) {
                 }
             }
             constants::Down | constants::Tab => {
-                if list_box.row_at_index(0) == list_box.selected_row() {
+                /*if list_box.row_at_index(0) == list_box.selected_row() {
                     match list_box.row_at_index(1) {
                         Some(row) => list_box.select_row(Some(&row)),
                         None => (),
                     }
+                }*/
+
+                match list_box.selected_row() {
+                    Some(row) => {
+                        match list_box.row_at_index(row.index() + 1) {
+                            Some(row) => list_box.select_row(Some(&row)),
+                            None => ()
+                        }
+                    }
+                    None => ()
                 }
-                Inhibit(false)
+
+                Inhibit(true)
+            }
+            constants::Up => {
+                match list_box.selected_row() {
+                    Some(row) => {
+                        match list_box.row_at_index(row.index() - 1) {
+                            Some(row) => list_box.select_row(Some(&row)),
+                            None => ()
+                        }
+                    }
+                    None => ()
+                }
+
+                Inhibit(true)
             }
             _ => Inhibit(false),
         }),
